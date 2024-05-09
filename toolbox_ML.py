@@ -1,4 +1,15 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from scipy import stats
+from scipy.stats import pearsonr
+from scipy.stats import chi2_contingency
+
+
+
 ## FUNCION describe_df
+# ALBERTO
 
 def describe_df(df):
     """
@@ -24,6 +35,7 @@ def describe_df(df):
     return summary.transpose()  # Transponer el resultado 
 
 
+#EMMA
 def tipifica_variables(dataframe, umbral_categoria, umbral_continua):
     # Inicializar una lista para almacenar los resultados
     resultados = []
@@ -53,6 +65,7 @@ def tipifica_variables(dataframe, umbral_categoria, umbral_continua):
     # Convertir la lista de resultados en un DataFrame y devolverlo
     return pd.DataFrame(resultados)
 
+#FRAN
 def get_features_num_regresion(dataframe, target_col, umbral_corr, pvalue= None):
 
     '''
@@ -106,3 +119,176 @@ def get_features_num_regresion(dataframe, target_col, umbral_corr, pvalue= None)
                 lista_features.append(columna)
     
     return lista_features
+
+
+#NAIM
+
+
+def plot_features_num_regression(df, target_col="", columns=[], umbral_corr=0, pvalue=None):
+    # Comprobación de valores de entrada
+    if not isinstance(df, pd.DataFrame):
+        print("Error: El primer argumento debe ser un DataFrame.")
+        return None
+    
+    if target_col not in df.columns:
+        print("Error: 'target_col' debe ser una columna válida del DataFrame.")
+        return None
+    
+    if not isinstance(columns, list):
+        print("Error: 'columns' debe ser una lista de nombres de columnas.")
+        return None
+    
+    for col in columns:
+        if col not in df.columns:
+            print(f"Error: '{col}' no es una columna válida del DataFrame.")
+            return None
+    
+    if not isinstance(umbral_corr, (int, float)):
+        print("Error: 'umbral_corr' debe ser un valor numérico.")
+        return None
+    
+    if not isinstance(pvalue, (float, int, type(None))):
+        print("Error: 'pvalue' debe ser un valor numérico o None.")
+        return None
+    
+    if not (0 <= umbral_corr <= 1):
+        print("Error: 'umbral_corr' debe estar en el rango [0, 1].")
+        return None
+    
+    # Verificar que target_col sea una variable numérica continua del DataFrame
+    if not pd.api.types.is_numeric_dtype(df[target_col]):
+        print("Error: 'target_col' debe ser una variable numérica continua del DataFrame.")
+        return None
+
+    # Si la lista de columnas está vacía, seleccionar todas las variables numéricas
+    if not columns:
+        columns = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
+    
+    # Filtrar columnas según correlación y p-value si se proporcionan
+    filtered_columns = []
+    for col in columns:
+        if col != target_col:
+            correlation = pearsonr(df[target_col], df[col])[0]
+            if abs(correlation) > umbral_corr:
+                if pvalue is not None:
+                    _, p_val = pearsonr(df[target_col], df[col])
+                    if p_val < (1 - pvalue):
+                        filtered_columns.append(col)
+                else:
+                    filtered_columns.append(col)
+    
+    if not filtered_columns:
+        print("No hay variables que cumplan los criterios de correlación y p-value.")
+        return None
+    
+    # Dividir las columnas filtradas en grupos de máximo 4 para pintar pairplots
+    num_plots = (len(filtered_columns) // 3) + 1
+    for i in range(num_plots):
+        cols_to_plot = [target_col] + filtered_columns[i*3:(i+1)*3]
+        sns.pairplot(df[cols_to_plot])
+        plt.show()
+    
+    return filtered_columns
+
+
+# UNAI 
+
+def get_features_cat_regression(df, target_col, p_value=0.05):
+    if df.empty:
+        print("El dataframe esta vacío")
+        return None
+    if not pd.api.types.is_numeric_dtype(df[target_col]):
+        print("La columna que has puesto no es una columna numerica")
+        return None
+    if not isinstance(p_value, float) or 0 > p_value or 1 < p_value:
+        print("El p_value no tiene un valor valido, recuerda que tiene que estar entre 0 y 1")
+        return None
+    if target_col not in df:
+        print("La columna no esta en el Dataframe, cambiala por una valida")
+        return None
+    
+    categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
+
+    encoded_df = pd.get_dummies(df_titanic, columns=categorical_columns)
+    encoded_columns = encoded_df.columns
+    new_categorical_columns = [col for col in encoded_columns if col.startswith(tuple(categorical_columns))]
+
+    print(encoded_columns)
+
+    #categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
+
+    #if df['survived'].shape[0]<30:
+    significant_columns = []
+    for col in new_categorical_columns:
+        if df['survived'].shape[0]<30:
+            t_statistic, p_value_t = stats.ttest_ind(encoded_df[col], encoded_df[target_col], nan_policy='omit')
+            if p_value_t < p_value:
+                significant_columns.append([col, t_statistic, p_value_t])
+        else:
+            z_statistic = (encoded_df[col].mean() - encoded_df[target_col].mean()) / (encoded_df[col].std() / np.sqrt(len(encoded_df)))
+            p_value_z = 2 * (1 - stats.norm.cdf(abs(z_statistic)))
+            if p_value_z < p_value:
+                significant_columns.append([col, z_statistic, p_value_z])
+
+    return significant_columns
+    
+#df_titanic = pd.read_csv('./data/titanic.csv')
+#target_col='survived'
+#print(target_col)
+#get_features_cat_regression(df_titanic,target_col)
+
+
+# FUNCION DE TODOS
+
+
+def get_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.05, with_individual_plot=False):
+    # Verificar que dataframe sea un DataFrame de pandas
+    if not isinstance(dataframe, pd.DataFrame):
+        raise ValueError("El argumento 'dataframe' debe ser un DataFrame de pandas")
+
+    # Verificar que target_col esté en el dataframe
+    if target_col != "" and target_col not in dataframe.columns:
+        raise ValueError("La columna 'target_col' no existe en el DataFrame")
+
+    # Verificar que las columnas en columns estén en el dataframe
+    for col in columns:
+        if col not in dataframe.columns:
+            raise ValueError(f"La columna '{col}' no existe en el DataFrame")
+
+    # Verificar que pvalue sea un valor válido
+    if not isinstance(pvalue, (int, float)):
+        raise ValueError("El argumento 'pvalue' debe ser un valor numérico")
+    
+    # Verificar que with_individual_plot sea un valor booleano
+    if not isinstance(with_individual_plot, bool):
+        raise ValueError("El argumento 'with_individual_plot' debe ser un valor booleano")
+
+    # Si columns está vacío, seleccionar todas las variables numéricas
+    if not columns:
+        columns = dataframe.select_dtypes(include=['number']).columns.tolist()
+
+    # Lista para almacenar las variables categóricas que cumplen con las condiciones
+    significant_categorical_variables = []
+
+    # Iterar sobre las columnas seleccionadas
+    for col in columns:
+        # Verificar si la columna es categórica
+        if dataframe[col].dtype == 'object':
+            # Calcular el test de chi-cuadrado entre la columna categórica y target_col
+            contingency_table = pd.crosstab(dataframe[col], dataframe[target_col])
+            chi2, p_val, _, _ = chi2_contingency(contingency_table)
+            
+            # Verificar si el p-value es menor que el umbral de significancia
+            if p_val < pvalue:
+                # Agregar la columna a la lista de variables categóricas significativas
+                significant_categorical_variables.append(col)
+
+                # Si with_individual_plot es True, dibujar el histograma agrupado
+                if with_individual_plot:
+                    sns.histplot(data=dataframe, x=col, hue=target_col, multiple="stack")
+                    plt.title(f"Histograma agrupado de {col} según {target_col}")
+                    plt.show()
+
+    # Devolver las variables categóricas que cumplen con las condiciones
+    return significant_categorical_variables
+
