@@ -290,5 +290,7 @@ def get_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.0
                     plt.show()
 
     # Devolver las variables categóricas que cumplen con las condiciones
-    return significant_categorical_variables
+    return significant_categorical_variables 
+
+
 
