@@ -87,26 +87,32 @@ def get_features_num_regresion(dataframe, target_col, umbral_corr, pvalue= None)
     Tipo lista compuesto por cadenas de texto.
     '''
 
-    df_tipos = tipifica_variables(dataframe, umbral_categoria = 10, umbral_continua = 0.7)
-    columnas_num = df_tipos.index.to_list()
-    for col in columnas_num.copy():
-        if (col != 'Numerica Discreta') | (col != 'Numerica Continua'):
-            columnas_num.remove(col)
+    cardinalidad = dataframe[target_col].nunique() / len(dataframe[target_col])
 
-    if (type(umbral_corr) != float) or (umbral_corr < 0) or (umbral_corr > 1):
+    if (umbral_corr < 0) or (umbral_corr > 1):
 
         print('Variable umbral_corr incorrecto.')
         return None
 
-    elif target_col not in columnas_num:
+    elif dataframe[target_col].dtype not in ['int8', 'int16', 'int32','int64', 'float16', 'float32', 'float64']:
 
         print('La columna seleccionada como target debe ser numerica.')
         return None
+    
+    elif cardinalidad < 0: # este no se si ponerlo
 
-    columnas_num.remove(target_col)
+        print('Tu variable target tiene una cardinalidad muy baja para ser target.')
+        return None
+    
+    lista_numericas = []
+    for column in dataframe.columns:
+        
+        if dataframe[column].dtypes in ['int8', 'int16', 'int32','int64', 'float16', 'float32', 'float64']:
+            lista_numericas.append(column)
 
+    lista_numericas.remove(target_col)
     lista_features = []
-    for columna in columnas_num:
+    for columna in lista_numericas:
 
         no_nulos = dataframe.dropna(subset= [target_col, columna])
         corr, pearson = pearsonr(no_nulos[target_col], no_nulos[columna])
@@ -122,15 +128,18 @@ def get_features_num_regresion(dataframe, target_col, umbral_corr, pvalue= None)
 
 
 #NAIM
-"""
-Toma un DataFrame como entrada, junto con una columna objetivo, una lista de columnas a considerar, un umbral de correlación y un valor de p-value opcional.
-Realiza comprobaciones de validez para los argumentos de entrada.
-Filtra las columnas basadas en su correlación con la columna objetivo y, opcionalmente, en el valor de p-value.
-Divide las columnas filtradas en grupos de hasta 4 para generar pairplots,
-Mostrando las relaciones entre las variables numéricas seleccionadas y la columna objetivo.
-"""
+
 
 def plot_features_num_regression(df, target_col="", columns=[], umbral_corr=0, pvalue=None):
+
+    """
+    Toma un DataFrame como entrada, junto con una columna objetivo, una lista de columnas a considerar, un umbral de correlación y un valor de p-value opcional.
+    Realiza comprobaciones de validez para los argumentos de entrada.
+    Filtra las columnas basadas en su correlación con la columna objetivo y, opcionalmente, en el valor de p-value.
+    Divide las columnas filtradas en grupos de hasta 4 para generar pairplots,
+    Mostrando las relaciones entre las variables numéricas seleccionadas y la columna objetivo.
+    """
+
     # Comprobación de valores de entrada
     if not isinstance(df, pd.DataFrame):
         print("Error: El primer argumento debe ser un DataFrame.")
@@ -224,7 +233,7 @@ def get_features_cat_regression(df, target_col, p_value=0.05):
             f_vals.append(value)
         f_val, p_val = stats.f_oneway(*f_vals)
         if p_val <= p_value:
-            relevant_columns.append([col, f_val, p_val])
+            relevant_columns.append(col)
 
     return relevant_columns
 
@@ -274,11 +283,9 @@ def plot_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.
                 # Agregar la columna a la lista de variables categóricas significativas
                 significant_categorical_variables.append(col)
 
-                # Si with_individual_plot es True, dibujar el histograma agrupado
-                if with_individual_plot:
-                    sns.histplot(data=dataframe, x=col, hue=target_col, multiple="stack")
-                    plt.title(f"Histograma agrupado de {col} según {target_col}")
-                    plt.show()
+                sns.histplot(data=dataframe, x=col, hue=target_col, multiple="stack")
+                plt.title(f"Histograma agrupado de {col} según {target_col}")
+                plt.show()
             else:
                 print(f"No se encontró significancia estadística para la variable categórica '{col}' con '{target_col}'")
 
