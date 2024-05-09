@@ -263,9 +263,9 @@ def get_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.0
     if not isinstance(with_individual_plot, bool):
         raise ValueError("El argumento 'with_individual_plot' debe ser un valor booleano")
 
-    # Si columns está vacío, seleccionar todas las variables numéricas
+    # Si columns está vacío, seleccionar todas las variables categóricas
     if not columns:
-        columns = dataframe.select_dtypes(include=['number']).columns.tolist()
+        columns = dataframe.select_dtypes(include=['object']).columns.tolist()
 
     # Lista para almacenar las variables categóricas que cumplen con las condiciones
     significant_categorical_variables = []
@@ -288,9 +288,14 @@ def get_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.0
                     sns.histplot(data=dataframe, x=col, hue=target_col, multiple="stack")
                     plt.title(f"Histograma agrupado de {col} según {target_col}")
                     plt.show()
+            else:
+                print(f"No se encontró significancia estadística para la variable categórica '{col}' con '{target_col}'")
+
+    # Si no se encontró significancia estadística para ninguna variable categórica
+    if not significant_categorical_variables:
+        print("No se encontró significancia estadística para ninguna variable categórica")
 
     # Devolver las variables categóricas que cumplen con las condiciones
-    return significant_categorical_variables 
-
-
+    return significant_categorical_variables
+  
 
