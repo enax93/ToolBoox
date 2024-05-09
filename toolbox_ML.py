@@ -122,7 +122,13 @@ def get_features_num_regresion(dataframe, target_col, umbral_corr, pvalue= None)
 
 
 #NAIM
-
+"""
+Toma un DataFrame como entrada, junto con una columna objetivo, una lista de columnas a considerar, un umbral de correlación y un valor de p-value opcional.
+Realiza comprobaciones de validez para los argumentos de entrada.
+Filtra las columnas basadas en su correlación con la columna objetivo y, opcionalmente, en el valor de p-value.
+Divide las columnas filtradas en grupos de hasta 4 para generar pairplots,
+Mostrando las relaciones entre las variables numéricas seleccionadas y la columna objetivo.
+"""
 
 def plot_features_num_regression(df, target_col="", columns=[], umbral_corr=0, pvalue=None):
     # Comprobación de valores de entrada
