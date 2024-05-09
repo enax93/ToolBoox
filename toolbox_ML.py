@@ -214,40 +214,25 @@ def get_features_cat_regression(df, target_col, p_value=0.05):
         return None
     
     categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
-
-    encoded_df = pd.get_dummies(df_titanic, columns=categorical_columns)
-    encoded_columns = encoded_df.columns
-    new_categorical_columns = [col for col in encoded_columns if col.startswith(tuple(categorical_columns))]
-
-    print(encoded_columns)
-
-    #categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
-
-    #if df['survived'].shape[0]<30:
-    significant_columns = []
-    for col in new_categorical_columns:
-        if df['survived'].shape[0]<30:
-            t_statistic, p_value_t = stats.ttest_ind(encoded_df[col], encoded_df[target_col], nan_policy='omit')
-            if p_value_t < p_value:
-                significant_columns.append([col, t_statistic, p_value_t])
-        else:
-            z_statistic = (encoded_df[col].mean() - encoded_df[target_col].mean()) / (encoded_df[col].std() / np.sqrt(len(encoded_df)))
-            p_value_z = 2 * (1 - stats.norm.cdf(abs(z_statistic)))
-            if p_value_z < p_value:
-                significant_columns.append([col, z_statistic, p_value_z])
-
-    return significant_columns
     
-#df_titanic = pd.read_csv('./data/titanic.csv')
-#target_col='survived'
-#print(target_col)
-#get_features_cat_regression(df_titanic,target_col)
+    relevant_columns = []
+    
+    for col in categorical_columns:
+        grouped = df.groupby(col)[target_col].apply(list).to_dict()
+        f_vals = []
+        for key, value in grouped.items():
+            f_vals.append(value)
+        f_val, p_val = stats.f_oneway(*f_vals)
+        if p_val <= p_value:
+            relevant_columns.append([col, f_val, p_val])
+
+    return relevant_columns
 
 
 # FUNCION DE TODOS
 
 
-def get_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.05, with_individual_plot=False):
+def plot_features_cat_regression(dataframe, target_col="", columns=[], pvalue=0.05, with_individual_plot=False):
     # Verificar que dataframe sea un DataFrame de pandas
     if not isinstance(dataframe, pd.DataFrame):
         raise ValueError("El argumento 'dataframe' debe ser un DataFrame de pandas")
