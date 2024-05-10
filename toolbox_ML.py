@@ -37,6 +37,28 @@ def describe_df(df):
 
 #EMMA
 def tipifica_variables(dataframe, umbral_categoria, umbral_continua):
+
+    """
+    Esta función analiza las columnas de un DataFrame para sugerir el tipo de variable que representan.
+    Utiliza la cardinalidad y el porcentaje de cardinalidad de cada columna para determinar si se trata
+    de una variable binaria, categórica, numérica continua o numérica discreta.
+    
+    Argumentos:
+    - dataframe (DataFrame de pandas): El DataFrame que contiene las variables a analizar.
+    - umbral_categoria (int): Umbral que define el límite máximo de cardinalidad para considerar
+      una variable como categórica. Si la cardinalidad de una columna es menor que este umbral, se
+      sugiere que la variable es categórica.
+    - umbral_continua (float): Umbral que define el porcentaje mínimo de cardinalidad para considerar
+      una variable como numérica continua. Si la cardinalidad de una columna es mayor o igual que
+      `umbral_categoria` y el porcentaje de cardinalidad es mayor o igual que este umbral, se sugiere
+      que la variable es numérica continua.
+      
+    Retorna:
+    - DataFrame: Un DataFrame que contiene dos columnas: "nombre_variable" y "tipo_sugerido". Cada
+      fila del DataFrame representa una columna del DataFrame de entrada, con el nombre de la columna
+      y el tipo sugerido de variable.
+    """
+
     # Inicializar una lista para almacenar los resultados
     resultados = []
     
