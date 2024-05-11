@@ -18,8 +18,7 @@ from toolbox_ML.py import describe_df
 df_titanic = pd.read_csv('./data/titanic.csv')
 describe_df(df_titanic)
 
-- Otra forma de utilizar este toolbox:
-```python
+#Otra forma de utilizar este toolbox:
 from tooolbox_ML.py as tb
 
 df_titanic = pd.read_csv('./data/titanic.csv')
