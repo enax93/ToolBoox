@@ -4,19 +4,23 @@ Este repositorio contiene una colección de funciones útiles para el manejo de 
 
 ## Contenido
 
-- `toolbox_ML.py`: Contiene funciones para el ................... TBD.
-- `Pruebas_Albert.ipynb`: Contiene pruebas realizadas para las creaciones de las funciones de Machine Learning.
-- `Pruebas_Emma.ipynb`: Contiene pruebas realizadas para las creaciones de las funciones de Machine Learning.
-- `Pruebas_Fran.ipynb`: Contiene pruebas realizadas para las creaciones de las funciones de Machine Learning.
-- `Pruebas_Naim.ipynb`: Contiene pruebas realizadas para las creaciones de las funciones de Machine Learning.
-- `Pruebas_Unai.ipynb`: Contiene pruebas realizadas para las creaciones de las funciones de Machine Learning.
+- `toolbox_ML.py`: Contiene funciones para el manejo de tareas de Machine Learning.
+- `prueba.ipynb`: Contiene pruebas realizadas para la demostración de las funciones sobre distintos datasets.
 - `Team_Challenge_ToolBox_I.ipynb`: Contiene las pautas para las funciones a realizar.
 
 ## Uso
 
-Puedes utilizar estas funciones en tus proyectos de Machine Learning importando el módulo correspondiente y llamando a las funciones necesarias. Por ejemplo:
+- Puedes utilizar estas funciones en tus proyectos de Machine Learning importando el módulo correspondiente y llamando a la funciones necesaria. Por ejemplo:
 
 ```python
 from toolbox_ML.py import describe_df
 
-# TBD
+df_titanic = pd.read_csv('./data/titanic.csv')
+describe_df(df_titanic)
+
+- Otra forma de utilizar este toolbox:
+```python
+from tooolbox_ML.py as tb
+
+df_titanic = pd.read_csv('./data/titanic.csv')
+tb.tipifica_variables(df_titanic, 4, 0.6)
