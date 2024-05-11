@@ -6,7 +6,6 @@ Este repositorio contiene una colección de funciones útiles para el manejo de 
 
 - `toolbox_ML.py`: Contiene funciones para el manejo de tareas de Machine Learning.
 - `prueba.ipynb`: Contiene pruebas realizadas para la demostración de las funciones sobre distintos datasets.
-- `Team_Challenge_ToolBox_I.ipynb`: Contiene las pautas para las funciones a realizar.
 
 ## Uso
 
@@ -18,8 +17,8 @@ from toolbox_ML.py import describe_df
 df_titanic = pd.read_csv('./data/titanic.csv')
 describe_df(df_titanic)
 
-#Otra forma de utilizar este toolbox:
+#Alternativa:
 from tooolbox_ML.py as tb
 
-df_titanic = pd.read_csv('./data/titanic.csv')
-tb.tipifica_variables(df_titanic, 4, 0.6)
+df_pokemon = pd.read_csv('./data/pokemon.csv')
+tb.tipifica_variables(df_pokemon, 4, 0.6)
