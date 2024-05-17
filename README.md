@@ -12,13 +12,13 @@ Este repositorio contiene una colección de funciones útiles para el manejo de 
 - Puedes utilizar estas funciones en tus proyectos de Machine Learning importando el módulo correspondiente y llamando a la funciones necesaria. Por ejemplo:
 
 ```python
-from toolbox_ML.py import describe_df
+from toolbox_ML import describe_df
 
 df_titanic = pd.read_csv('./data/titanic.csv')
 describe_df(df_titanic)
 
 #Alternativa:
-from tooolbox_ML.py as tb
+from tooolbox_ML as tb
 
 df_pokemon = pd.read_csv('./data/pokemon.csv')
 tb.tipifica_variables(df_pokemon, 4, 0.6)
