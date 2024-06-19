@@ -130,3 +130,58 @@ def plot_features_num_classification(df:pd.DataFrame, target_col:str= '', column
     
     return col_anova # devolvemos los nombres de las features que han superado la significancia estadistica
     
+    
+
+def plot_features_cat_classification(df, target_col="", columns=[], mi_threshold=0.0, normalize=False):
+    """
+        Pinta las distribuciones de las columnas categoricas que pasan un threshold de informacion mutua con respecto a una columna objetivo haciendo uso de la funcion get_features_cat_classification
+
+        Entrada: 
+        - df->dataframe objetivo 
+        - target_col->columna(s) objetivo, pueden ser varias
+        - mi_threshold->limite usado para la comprobacion de informacion mutua de las columnas
+        - normalize->booleano que indica si se ha de normalizar o no a la hora de comprobar la informacion mutua
+
+        Salida
+
+        - Plots de las variables que han pasado el limite de informacion mutua, representando la relacion entre esa columna y la columna objetivo
+    """
+    if not isinstance(df, pd.DataFrame):
+        print("El dataframe proporcionado en realidad no es un dataframe")
+        return None
+    
+    if target_col == "":
+        print("Especifica una columna")
+        return None
+    
+    if target_col not in df.columns:
+        print(f"La columna '{target_col}' no esta en el datarame")
+        return None
+
+    if not isinstance(df[target_col].dtype, pd.CategoricalDtype):
+        df[target_col] = df[target_col].astype('category')
+    
+    if not columns:
+        columns = df.select_dtypes(include=['category', 'object']).columns.tolist()
+        if target_col in columns:
+            columns.remove(target_col)
+    
+    if not all(col in df.columns for col in columns):
+        print("Comprueba que todas las columnas espeficadas esten en el dataframe")
+        return None
+    
+    selected_columns = get_features_cat_classification(df, target_col, normalize, mi_threshold)
+    
+    if not selected_columns:
+        print("Ninguna columna cumple con la condicion de la informacion mutua")
+        return None
+    
+    for col in selected_columns:
+        plt.figure(figsize=(10, 6))
+        df.groupby([col, target_col]).size().unstack().plot(kind='bar', stacked=True)
+        plt.title(f'Distribucion de {target_col} con {col}')
+        plt.xlabel(col)
+        plt.ylabel('Contador')
+        plt.legend(title=target_col)
+        plt.show()
+        
