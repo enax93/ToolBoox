@@ -195,7 +195,7 @@ es decir que la función siempre devuelve al menos dos listas.
 '''
 
 from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel, RFE
-from mlxtend.feature_selection import SequentialFeatureSelector as SFS
+from sklearn.feature_selection import SequentialFeatureSelector as SFS
 
 def super_selector(dataset, target_col="", selectores=None, hard_voting=[]):
     """
