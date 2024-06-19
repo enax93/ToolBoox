@@ -31,7 +31,7 @@ tendrá que devolver la precisión de "red", la de "white" y el recall de "red".
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import mean_squared_error, median_absolute_error, accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 def eval_model(target, predictions, problem_type, metrics):
         
@@ -59,7 +59,7 @@ def eval_model(target, predictions, problem_type, metrics):
                     print(f'RMSE: {rmse}')
                     results.append(rmse)
                 elif metric == 'MAE':
-                    mae = mean_squared_error(target, predictions)
+                    mae = mean_absolute_error(target, predictions)
                     print(f'MAE: {mae}')
                     results.append(mae)
                 elif metric == 'MAPE':
@@ -79,8 +79,8 @@ def eval_model(target, predictions, problem_type, metrics):
                     plt.show()
 
         elif problem_type == 'classification':
-            if not all(metric.startwithc(('ACCURACY', 'PRECISION', 'RECALL', 'CLASS REPORT', 'MATRIX')) for metric in metrics):
-                raise ValueError('Las metricas para regresion deben ser "ACCURACY", "PRECISION", "RECALL", "CLASS_REPORT", "MATRIX", "MATRIX_RECALL", "MATRIX_PRED" o "PRECISION_X", "RECALL_X".')
+            if not all(metric.startswith(('ACCURACY', 'PRECISION', 'RECALL', 'CLASS REPORT', 'MATRIX')) for metric in metrics):
+                raise ValueError('Las metricas para clasificación deben ser "ACCURACY", "PRECISION", "RECALL", "CLASS_REPORT", "MATRIX", "MATRIX_RECALL", "MATRIX_PRED" o "PRECISION_X", "RECALL_X".')
             
             for metric in metrics:
                 if metric == 'ACCURACY':
@@ -120,7 +120,7 @@ def eval_model(target, predictions, problem_type, metrics):
                     disp = ConfusionMatrixDisplay(confusion_matrix = mat_pred)
                     disp.plot()
                     plt.show()
-                elif metric.startwith('PRECISION_'):
+                elif metric.startswith('PRECISION_'):
                     label = metric.split('_')[1]
                     try:
                         precision = precision_score(target, predictions, labels = [label], average = 'micro')
@@ -128,7 +128,7 @@ def eval_model(target, predictions, problem_type, metrics):
                         results.append(precision)
                     except ValueError:
                         raise ValueError(f'La clase "{label}" no esta presente en el target.')
-                elif metric.startwhith('RECALL_'):
+                elif metric.startswith('RECALL_'):
                     label = metric.split(_)[1]
                     try:
                         recall = recall_score(target, predictions, labels = [label], average = 'micro')
