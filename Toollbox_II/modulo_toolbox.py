@@ -2,15 +2,19 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.feature_selection import mutual_info_classif
-from sklearn.preprocessing import LabelEncoder
-from scipy import stats
 import math
 import warnings
+
 warnings.filterwarnings('ignore')
 
+from scipy.stats import f_oneway
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.preprocessing import LabelEncoder
+from scipy import stats
 
 def paramns_check(df:pd.DataFrame, target_col:str, columns:list, pvalue:float) -> bool:
+    
     '''
     Esta es una funcion de comprobacion para los parametros.
 
@@ -37,6 +41,170 @@ def paramns_check(df:pd.DataFrame, target_col:str, columns:list, pvalue:float) -
         return False
     
     return True
+
+def eval_model(target, predictions, problem_type, metrics):
+        
+        """
+    Evalúa un modelo de regresión o clasificación en base a las métricas especificadas.
+
+    Argumentos:
+    - target (array-like): Valores verdaderos de los datos objetivo.
+    - predictions (array-like): Valores predichos por el modelo.
+    - problem_type (str): Tipo de problema, 'regression' para regresión o 'classification' para clasificación.
+    - metrics (list of str): Lista de métricas a evaluar. Las métricas posibles dependen del tipo de problema.
+
+    Retorna:
+    - tuple: Tupla con los resultados de las métricas solicitadas, en el orden en que aparecen en la lista de entrada.
+    """
+        results = []
+
+        if problem_type == 'regression':
+            if not all(metric in ['RMSE', 'MAE', 'MAPE', 'GRAPH'] for metric in metrics):
+                raise ValueError('Las metricas para regresion deben ser "RMSE", "MAE", "MAPE", "GRAPH".')
+            
+            for metric in metrics:
+                if metric == 'RMSE':
+                    rmse = np.sqrt(mean_squared_error(target, predictions))
+                    print(f'RMSE: {rmse}')
+                    results.append(rmse)
+                elif metric == 'MAE':
+                    mae = mean_absolute_error(target, predictions)
+                    print(f'MAE: {mae}')
+                    results.append(mae)
+                elif metric == 'MAPE':
+                    try:
+                        mape = np.mean(np.abs((target - predictions / target))) * 100
+                    except ZeroDivisionError:
+                         raise ValueError('No se puede calcuar el MAPE porque el target contiene valores 0')
+                    print(f'MAPE: {mape}')
+                    results.append(mape)
+                elif metric == 'GRAPH':
+                    plt.figure(figsize = (12, 8))
+                    plt.scatter(target, predictions, alpha = 0.3)
+                    plt.xlabel('Target')
+                    plt.ylabel('Predictions')
+                    plt.title('Target Vs Predictions')
+                    plt.grid(True)
+                    plt.show()
+
+        elif problem_type == 'classification':
+            if not all(metric.startswith(('ACCURACY', 'PRECISION', 'RECALL', 'CLASS REPORT', 'MATRIX')) for metric in metrics):
+                raise ValueError('Las metricas para clasificación deben ser "ACCURACY", "PRECISION", "RECALL", "CLASS_REPORT", "MATRIX", "MATRIX_RECALL", "MATRIX_PRED" o "PRECISION_X", "RECALL_X".')
+            
+            for metric in metrics:
+                if metric == 'ACCURACY':
+                    accuracy = accuracy_score(target, predictions)
+                    print(f'Accuracy: {accuracy}')
+                    results.append(accuracy)
+                elif metric == 'PRECISION':
+                    precision = precision_score(target, predictions, average = 'macro')
+                    print(f'Precision: {precision}')
+                    results.append(precision)
+                elif metric == 'RECALL':
+                    recall = recall_score(target, predictions, average = 'macro')
+                    print(f'Recall: {recall}')
+                    results.append(recall)
+                elif metric == 'CLASS_REPORT':
+                    report = classification_report(target, predictions)
+                    print('Clasification Report')
+                    print(report)
+                elif metric == 'MATRIX':
+                    con_matrix = confusion_matrix(target, predictions)
+                    print('Confusion Matrix')
+                    print(con_matrix)
+                    disp = ConfusionMatrixDisplay(confusion_matrix = con_matrix)
+                    disp.plot()
+                    plt.show()
+                elif metric == 'MATRIX_RECALL':
+                    mat_rec = confusion_matrix(target, predictions, normalize = True)
+                    print('Confusion Matrix Normalize Recall')
+                    print(mat_rec)
+                    disp = ConfusionMatrixDisplay(confusion_matrix = mat_rec)
+                    disp.plot()
+                    plt.show()
+                elif metric == 'MATRIX_PRED':
+                    mat_pred = confusion_matrix(target, predictions, normalize = 'pred')
+                    print(f'Confusion Matrix Normalize Predictions')
+                    print(mat_pred)
+                    disp = ConfusionMatrixDisplay(confusion_matrix = mat_pred)
+                    disp.plot()
+                    plt.show()
+                elif metric.startswith('PRECISION_'):
+                    label = metric.split('_')[1]
+                    try:
+                        precision = precision_score(target, predictions, labels = [label], average = 'micro')
+                        print(f'Precision for class "{label}: {precision}')
+                        results.append(precision)
+                    except ValueError:
+                        raise ValueError(f'La clase "{label}" no esta presente en el target.')
+                elif metric.startswith('RECALL_'):
+                    label = metric.split(_)[1]
+                    try:
+                        recall = recall_score(target, predictions, labels = [label], average = 'micro')
+                        print(f'Recall for class "{label}": {recall}')
+                        results.append(recall)
+                    except ValueError:
+                        raise ValueError(f'La clase "{label}" no esta presente en el target.')
+        else:
+            raise ValueError('El tipo de problema debe ser "regression" o "clasification".')
+        
+        return tuple(results)
+
+def get_features_num_classification(df, target_col, pvalue=0.05):
+    """
+    Identifica columnas numéricas en un DataFrame que tienen un resultado significativo
+    en la prueba ANOVA con respecto a una columna objetivo categórica.
+
+    Parámetros:
+    df (pd.DataFrame): El DataFrame de entrada que contiene los datos.
+    target_col (str): El nombre de la columna objetivo en el DataFrame. Esta debe ser 
+                      una columna categórica con baja cardinalidad (10 o menos valores únicos).
+    pvalue (float): El nivel de significancia para la prueba ANOVA. El valor predeterminado es 0.05.
+
+    Retorna:
+    list: Una lista de nombres de columnas numéricas que tienen una relación significativa con 
+          la columna objetivo según la prueba ANOVA.
+          Retorna None si alguna de las comprobaciones de los argumentos de entrada falla, 
+          e imprime un mensaje indicando la razón.
+    """
+    
+    # Comprobación de que el DataFrame no está vacío
+    if df.empty:
+        print("El DataFrame está vacío.")
+        return None
+    
+    # Comprobación de que target_col está en el DataFrame
+    if target_col not in df.columns:
+        print(f"La columna '{target_col}' no se encuentra en el DataFrame.")
+        return None
+    
+    # Comprobación de que target_col es categórica con baja cardinalidad
+    if not isinstance(df[target_col].dtype, pd.CategoricalDtype) and not pd.api.types.is_object_dtype(df[target_col]):
+        print(f"La columna '{target_col}' no es categórica.")
+        return None
+    
+    if df[target_col].nunique() > 10:
+        print(f"La columna '{target_col}' tiene demasiadas categorías (más de 10).")
+        return None
+    
+    # Comprobación de que pvalue es un float y está en el rango correcto
+    if not isinstance(pvalue, float) or not (0 < pvalue < 1):
+        print("El valor de 'pvalue' debe ser un float entre 0 y 1.")
+        return None
+    
+    # Filtrar las columnas numéricas
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    
+    # Lista para almacenar las columnas que cumplen con el criterio
+    significant_columns = []
+    
+    for col in numeric_cols:
+        groups = [df[col][df[target_col] == category] for category in df[target_col].unique()]
+        f_stat, p_val = f_oneway(*groups)
+        if p_val <= pvalue:
+            significant_columns.append(col)
+    
+    return significant_columns
 
 def plot_features_num_classification(df:pd.DataFrame, target_col:str= '', columns:list= [], pvalue:float= 0.05) -> list:
     # version con generador de indices
@@ -241,6 +409,4 @@ def get_features_cat_classification(dataframe, target_col, normalize=False, mi_t
     # Seleccionar características basadas en el umbral
     selected_features = [cat_features[i] for i in range(len(cat_features)) if mi[i] >= mi_threshold]
     
-    return selected_features
-
-        
+    return selected_features       
