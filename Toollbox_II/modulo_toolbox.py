@@ -1,8 +1,10 @@
+import bootcampviztools as bt
 import pandas as pd
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import seaborn as sns
-import math
+import toolbox_ML as tb
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -11,11 +13,11 @@ from scipy.stats import f_oneway
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.preprocessing import LabelEncoder
-from scipy import stats
+
 
 def paramns_check(df:pd.DataFrame, target_col:str, columns:list, pvalue:float) -> bool:
     
-    '''
+    """
     Esta es una funcion de comprobacion para los parametros.
 
     Comprobamos que:
@@ -25,8 +27,8 @@ def paramns_check(df:pd.DataFrame, target_col:str, columns:list, pvalue:float) -
     .- que las columnas proporcionadas son numericas 
     .- que el pvalue es numerico y esta entre 0 y 1
 
-    La funcion devuelve un booleano que certifica si los parametros introducidos son adecuados.
-    '''
+    La función devuelve un booleano que certifica si los parametros introducidos son adecuados.
+    """
     
     try:
         if type(df) != pd.core.frame.DataFrame:
@@ -41,6 +43,12 @@ def paramns_check(df:pd.DataFrame, target_col:str, columns:list, pvalue:float) -
         return False
     
     return True
+
+def eval_model(target, predictions, problem_type, metrics):
+        
+    import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 def eval_model(target, predictions, problem_type, metrics):
         
@@ -86,10 +94,11 @@ def eval_model(target, predictions, problem_type, metrics):
                     plt.title('Target Vs Predictions')
                     plt.grid(True)
                     plt.show()
-
+        
         elif problem_type == 'classification':
+            print(type(metrics))
             if not all(metric.startswith(('ACCURACY', 'PRECISION', 'RECALL', 'CLASS REPORT', 'MATRIX')) for metric in metrics):
-                raise ValueError('Las metricas para clasificación deben ser "ACCURACY", "PRECISION", "RECALL", "CLASS_REPORT", "MATRIX", "MATRIX_RECALL", "MATRIX_PRED" o "PRECISION_X", "RECALL_X".')
+                raise ValueError('Las metricas para regresion deben ser "ACCURACY", "PRECISION", "RECALL", "CLASS_REPORT", "MATRIX", "MATRIX_RECALL", "MATRIX_PRED" o "PRECISION_X", "RECALL_X".')
             
             for metric in metrics:
                 if metric == 'ACCURACY':
@@ -106,7 +115,7 @@ def eval_model(target, predictions, problem_type, metrics):
                     results.append(recall)
                 elif metric == 'CLASS_REPORT':
                     report = classification_report(target, predictions)
-                    print('Clasification Report')
+                    print('Classification Report')
                     print(report)
                 elif metric == 'MATRIX':
                     con_matrix = confusion_matrix(target, predictions)
@@ -146,11 +155,12 @@ def eval_model(target, predictions, problem_type, metrics):
                     except ValueError:
                         raise ValueError(f'La clase "{label}" no esta presente en el target.')
         else:
-            raise ValueError('El tipo de problema debe ser "regression" o "clasification".')
+            raise ValueError('El tipo de problema debe ser "regression" o "classification".')
         
         return tuple(results)
 
 def get_features_num_classification(df, target_col, pvalue=0.05):
+
     """
     Identifica columnas numéricas en un DataFrame que tienen un resultado significativo
     en la prueba ANOVA con respecto a una columna objetivo categórica.
@@ -208,9 +218,8 @@ def get_features_num_classification(df, target_col, pvalue=0.05):
 
 def plot_features_num_classification(df:pd.DataFrame, target_col:str= '', columns:list= [], pvalue:float= 0.05) -> list:
     # version con generador de indices
-
-    '''
-    Parametros:
+    """
+    Parámetros:
     .- df: un dataframe de pandas
     .- target_col: el nombre de la variable target (debe ser categorica objeto/str, si contiene numeros, procede mapearla)
     .- columns: el nombre de las variables numericas del df, adjuntas en una lista (vacia por defecto)
@@ -223,7 +232,7 @@ def plot_features_num_classification(df:pd.DataFrame, target_col:str= '', column
     3.- printa una relacion de graficas comparativas de colinealidad entre las distinta variables numericas para su estudio y miniEDA
 
     Explicamos la funcion mas en detalle a continuacion.
-    '''
+    """
 
     paramns_ok = paramns_check(df, target_col, columns, pvalue) # comprobamos que los parametros son adecuados, si no lo son retornamos None y printamos que no lo son
     if not paramns_ok:
@@ -243,7 +252,7 @@ def plot_features_num_classification(df:pd.DataFrame, target_col:str= '', column
         for grp in grps:
             prov_list.append(df[df[target_col] == grp][feature]) # agregamos a la lista las series que comentabamos antes
         
-        f_st, p_va = stats.f_oneway(*prov_list) # realizamos el test anova sobre la var numerica de turno (en iteracion actual) en relacion con cada valor del target y comprobamos su pvalue en funcion de su varianza
+        f_st, p_va = f_oneway(*prov_list) # realizamos el test anova sobre la var numerica de turno (en iteracion actual) en relacion con cada valor del target y comprobamos su pvalue en funcion de su varianza
         if p_va <= pvalue: # si hay significancia estadistica recahazamos H0(medias similares) y adjuntamos el nombre de la feature a col_anova 
             col_anova.append(feature) 
     
@@ -297,22 +306,20 @@ def plot_features_num_classification(df:pd.DataFrame, target_col:str= '', column
     col_anova.remove(target_col) # quitamos el target de la lista de features que han superado el test (ya ha sido util para graficar)
     
     return col_anova # devolvemos los nombres de las features que han superado la significancia estadistica
-    
-    
 
 def plot_features_cat_classification(df, target_col="", columns=[], mi_threshold=0.0, normalize=False):
+    
     """
-        Pinta las distribuciones de las columnas categoricas que pasan un threshold de informacion mutua con respecto a una columna objetivo haciendo uso de la funcion get_features_cat_classification
-
-        Entrada: 
-        - df->dataframe objetivo 
-        - target_col->columna(s) objetivo, pueden ser varias
-        - mi_threshold->limite usado para la comprobacion de informacion mutua de las columnas
-        - normalize->booleano que indica si se ha de normalizar o no a la hora de comprobar la informacion mutua
-
-        Salida
-
-        - Plots de las variables que han pasado el limite de informacion mutua, representando la relacion entre esa columna y la columna objetivo
+    Pinta las distribuciones de las columnas categoricas que pasan un threshold de informacion mutua con respecto a una columna objetivo haciendo uso de la funcionget_features_cat_classification
+    
+    Parámetros: 
+    - df->dataframe objetivo 
+    - target_col->columna(s) objetivo, pueden ser varias
+    - mi_threshold->limite usado para la comprobacion de informacion mutua de las columnas
+    - normalize->booleano que indica si se ha de normalizar o no a la hora de comprobar la informacion mutua
+    
+    Rertorna:
+    - Plots de las variables que han pasado el limite de informacion mutua, representando la relacion entre esa columna y la columna objetivo
     """
     if not isinstance(df, pd.DataFrame):
         print("El dataframe proporcionado en realidad no es un dataframe")
